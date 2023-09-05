@@ -1,0 +1,11 @@
+{
+  "name": "tic-tac-toe-server",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "Dmitry Kuznetsov",
+  "license": "ISC"
+}
