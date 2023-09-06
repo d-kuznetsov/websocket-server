@@ -2,10 +2,14 @@
 
 const fastify = require('fastify')();
 fastify.register(require('@fastify/websocket'));
+const gameLogic = require('./game-logic');
 
 fastify.register(async function (fastify) {
   fastify.get('/ws', { websocket: true }, (connection, req) => {
     const { id } = req;
+    console.log('onConnect');
+    gameLogic.handlePlayerJoin(connection.socket);
+
     connection.socket.on('message', (message) => {
       console.log(`Received: ${message}. Id: ${id}`);
       connection.socket.send(
@@ -17,6 +21,7 @@ fastify.register(async function (fastify) {
 
     connection.socket.on('close', () => {
       console.log(`Disconnected ${id}`);
+      gameLogic.handlePlayerDisconnect(connection.socket);
     });
   });
 });
