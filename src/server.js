@@ -3,6 +3,7 @@
 const fastify = require('fastify')();
 fastify.register(require('@fastify/websocket'));
 const gameLogic = require('./game-logic');
+const { fetchJoke } = require('./joke-api');
 
 fastify.register(async function (fastify) {
   fastify.get('/ws', { websocket: true }, (connection, req) => {
@@ -32,6 +33,12 @@ fastify.register(async function (fastify) {
 
 const run = async () => {
   try {
+    const jokePromises = [];
+    for (let i = 0; i < 20; i++) {
+      jokePromises.push(fetchJoke());
+    }
+    await Promise.all(jokePromises);
+
     const address = await fastify.listen({
       port: 3000,
     });
