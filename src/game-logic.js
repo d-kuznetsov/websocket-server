@@ -7,7 +7,7 @@ const games = new Map();
 function handlePlayerJoin(socket) {
   if (!waitingSocket) {
     waitingSocket = socket;
-    socket.send(createMessage('waining'));
+    socket.send(createMessage('waiting'));
   } else {
     const game = new Game(waitingSocket, socket);
     games.set(waitingSocket, game);
@@ -19,6 +19,9 @@ function handlePlayerJoin(socket) {
 
 function handlePlayerDisconnect(socket) {
   const game = games.get(socket);
+  if (waitingSocket === socket) {
+    waitingSocket = null;
+  }
   if (game) {
     const alivePlayer = game.players.find((player) => {
       return player.socket != socket;
@@ -27,6 +30,18 @@ function handlePlayerDisconnect(socket) {
     games.delete(alivePlayer.socket);
     alivePlayer.opponentDisconnected();
     handlePlayerJoin(alivePlayer.socket);
+  }
+}
+
+function handleMove(socket, data) {
+  const game = games.get(socket);
+  if (game) {
+    const player = game.players.find((pl) => pl.socket == socket);
+    if (game.board[data.row][data.col] === '') {
+      game.board[data.row][data.col] = player.symbol;
+      game.currentPlayer = game.currentPlayer == 'X' ? 'O' : 'X';
+      game.update();
+    }
   }
 }
 
@@ -41,6 +56,12 @@ class Game {
       player.startGame(this.board, this.currentPlayer, player.symbol);
     });
   }
+
+  update() {
+    this.players.forEach((player) => {
+      player.update(this.board, this.currentPlayer);
+    });
+  }
 }
 
 class Player {
@@ -50,10 +71,19 @@ class Player {
   }
   startGame(board, currentPlayer) {
     this.socket.send(
-      createMessage('startGame', {
+      createMessage('playing', {
         board,
         currentPlayer,
         symbol: this.symbol,
+      })
+    );
+  }
+
+  update(board, currentPlayer) {
+    this.socket.send(
+      createMessage('update', {
+        board,
+        currentPlayer,
       })
     );
   }
@@ -73,4 +103,5 @@ function createBoard() {
 module.exports = {
   handlePlayerJoin,
   handlePlayerDisconnect,
+  handleMove,
 };

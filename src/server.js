@@ -11,6 +11,10 @@ fastify.register(async function (fastify) {
     gameLogic.handlePlayerJoin(connection.socket);
 
     connection.socket.on('message', (message) => {
+      const msg = JSON.parse(message);
+      if (msg.type === 'move') {
+        gameLogic.handleMove(connection.socket, msg.data);
+      }
       console.log(`Received: ${message}. Id: ${id}`);
       connection.socket.send(
         JSON.stringify({
