@@ -9,7 +9,7 @@ fastify.register(async function (fastify) {
   fastify.get('/ws', { websocket: true }, (connection, req) => {
     const { id } = req;
     console.log('onConnect');
-    gameLogic.handlePlayerJoin(connection.socket);
+    gameLogic.handleConnection(connection.socket);
 
     connection.socket.on('message', (message) => {
       const msg = JSON.parse(message);
@@ -26,7 +26,7 @@ fastify.register(async function (fastify) {
 
     connection.socket.on('close', () => {
       console.log(`Disconnected ${id}`);
-      gameLogic.handlePlayerDisconnect(connection.socket);
+      gameLogic.handleDisconnection(connection.socket);
     });
   });
 });

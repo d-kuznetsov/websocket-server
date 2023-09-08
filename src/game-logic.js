@@ -5,10 +5,19 @@ let waitingSocket = null;
 
 const games = new Map();
 
-function handlePlayerJoin(socket) {
+const MSG_WAIT = 'wait';
+const MSG_START = 'start';
+const MSG_UPDATE = 'update';
+const MSG_FINISH = 'finish';
+
+const RESULT_WIN = 'win';
+const RESULT_LOSE = 'lose';
+const RESULT_DRAW = 'draw';
+
+function handleConnection(socket) {
   if (!waitingSocket) {
     waitingSocket = socket;
-    socket.send(createMessage('waiting'));
+    socket.send(createMessage(MSG_WAIT));
   } else {
     const game = new Game(waitingSocket, socket);
     games.set(waitingSocket, game);
@@ -18,42 +27,47 @@ function handlePlayerJoin(socket) {
   }
 }
 
-function handlePlayerDisconnect(socket) {
-  const game = games.get(socket);
+function handleDisconnection(socket) {
   if (waitingSocket === socket) {
     waitingSocket = null;
   }
+
+  const game = games.get(socket);
   if (game) {
-    const alivePlayer = game.players.find((player) => {
+    const connectedPlayer = game.players.find((player) => {
       return player.socket != socket;
     });
     games.delete(socket);
-    games.delete(alivePlayer.socket);
-    alivePlayer.opponentDisconnected();
-    handlePlayerJoin(alivePlayer.socket);
+    games.delete(connectedPlayer.socket);
+    //connectedPlayer.opponentDisconnected();
+    handleConnection(connectedPlayer.socket);
   }
 }
 
 function handleMove(socket, data) {
   const game = games.get(socket);
   if (game) {
-    const player = game.players.find((pl) => pl.socket == socket);
+    const player = game.players.find((player) => player.socket == socket);
+
     if (game.board[data.row][data.col] === '') {
       game.board[data.row][data.col] = player.symbol;
+
       if (game.checkWin()) {
-        game.getCurrentPlayer().gameOver('win', game.board, getJoke());
-        game.getIdlePlayer().gameOver('lose', game.board);
+        game.getCurrentPlayer().finishGame(RESULT_WIN, game.board, getJoke());
+        game.getIdlePlayer().finishGame(RESULT_LOSE, game.board);
         games.delete(game.getCurrentPlayer().socket);
         games.delete(game.getIdlePlayer().socket);
         return;
       }
+
       if (game.checkDraw()) {
-        game.getCurrentPlayer().gameOver('draw', game.board);
-        game.getIdlePlayer().gameOver('draw', game.board);
+        game.getCurrentPlayer().finishGame(RESULT_DRAW, game.board);
+        game.getIdlePlayer().finishGame(RESULT_DRAW, game.board);
         games.delete(game.getCurrentPlayer().socket);
         games.delete(game.getIdlePlayer().socket);
         return;
       }
+
       game.activePlayer = game.activePlayer == 'X' ? 'O' : 'X';
       game.update();
     }
@@ -154,7 +168,7 @@ class Player {
   }
   startGame(board, activePlayer) {
     this.socket.send(
-      createMessage('playing', {
+      createMessage(MSG_START, {
         board,
         activePlayer,
         symbol: this.symbol,
@@ -164,7 +178,7 @@ class Player {
 
   update(board, activePlayer) {
     this.socket.send(
-      createMessage('update', {
+      createMessage(MSG_UPDATE, {
         board,
         activePlayer,
       })
@@ -174,9 +188,9 @@ class Player {
     this.socket.send(createMessage('oponent Disconnected'));
   }
 
-  gameOver(result, board, joke) {
+  finishGame(result, board, joke) {
     this.socket.send(
-      createMessage('gameOver', {
+      createMessage(MSG_FINISH, {
         result,
         board,
         joke,
@@ -194,7 +208,7 @@ function createBoard() {
 }
 
 module.exports = {
-  handlePlayerJoin,
-  handlePlayerDisconnect,
+  handleConnection,
+  handleDisconnection,
   handleMove,
 };
