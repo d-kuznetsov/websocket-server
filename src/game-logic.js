@@ -1,17 +1,20 @@
-const { createMessage } = require('./helpers');
+const { createMessage } = require('./utils');
 const { getJoke } = require('./joke-api');
+const {
+  MSG_WAIT,
+  MSG_START,
+  MSG_UPDATE,
+  MSG_FINISH,
+
+  RESULT_WIN,
+  RESULT_LOSE,
+  RESULT_DRAW,
+
+  BOARD_SIZE,
+} = require('./config');
 
 let waitingSocket = null;
 const games = new Map();
-
-const MSG_WAIT = 'wait';
-const MSG_START = 'start';
-const MSG_UPDATE = 'update';
-const MSG_FINISH = 'finish';
-
-const RESULT_WIN = 'win';
-const RESULT_LOSE = 'lose';
-const RESULT_DRAW = 'draw';
 
 function handleConnection(socket) {
   if (!waitingSocket) {
@@ -30,6 +33,7 @@ function handleDisconnection(socket) {
   if (waitingSocket === socket) {
     waitingSocket = null;
   }
+
   const game = games.get(socket);
   if (game) {
     const connectedPlayer = game.getPlayerBySocket(socket, false);
@@ -216,10 +220,10 @@ class Player {
   }
 }
 
-function createBoard(size = 3) {
+function createBoard() {
   const board = [];
-  for (let i = 0; i < size; i++) {
-    board.push(new Array(size).fill(''));
+  for (let i = 0; i < BOARD_SIZE; i++) {
+    board.push(new Array(BOARD_SIZE).fill(''));
   }
   return board;
 }
