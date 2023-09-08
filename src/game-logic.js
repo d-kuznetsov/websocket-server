@@ -2,7 +2,6 @@ const { createMessage } = require('./helpers');
 const { getJoke } = require('./joke-api');
 
 let waitingSocket = null;
-
 const games = new Map();
 
 const MSG_WAIT = 'wait';
@@ -17,7 +16,7 @@ const RESULT_DRAW = 'draw';
 function handleConnection(socket) {
   if (!waitingSocket) {
     waitingSocket = socket;
-    socket.send(createMessage(MSG_WAIT));
+    waitingSocket.send(createMessage(MSG_WAIT));
   } else {
     const game = new Game(waitingSocket, socket);
     games.set(waitingSocket, game);
@@ -35,8 +34,8 @@ function handleDisconnection(socket) {
   if (game) {
     const connectedPlayer = game.getPlayerBySocket(socket, false);
     games.delete(socket);
-    games.delete(connectedPlayer.socket);
-    handleConnection(connectedPlayer.socket);
+    games.delete(connectedPlayer.getSocket());
+    handleConnection(connectedPlayer.getSocket());
   }
 }
 
@@ -46,19 +45,19 @@ function handleMove(socket, data) {
     const player = game.getPlayerBySocket(socket, true);
 
     if (game.board[data.row][data.col] === '') {
-      game.board[data.row][data.col] = player.symbol;
+      game.board[data.row][data.col] = player.getSymbol();
 
       if (game.checkWin()) {
         game.finish();
-        games.delete(game.getActivePlayer().socket);
-        games.delete(game.getIdlePlayer().socket);
+        games.delete(game.getActivePlayer().getSocket());
+        games.delete(game.getIdlePlayer().getSocket());
         return;
       }
 
       if (game.checkDraw()) {
         game.finish(true);
-        games.delete(game.getActivePlayer().socket);
-        games.delete(game.getIdlePlayer().socket);
+        games.delete(game.getActivePlayer().getSocket());
+        games.delete(game.getIdlePlayer().getSocket());
         return;
       }
 
@@ -74,13 +73,14 @@ class Game {
     this.board = createBoard();
     this.activePlayer = 'X';
   }
+
   start() {
     this.players.forEach((player) => {
-      player.socket.send(
+      player.getSocket().send(
         createMessage(MSG_START, {
           board: this.board,
           activePlayer: this.activePlayer,
-          symbol: player.symbol,
+          symbol: player.getSymbol(),
         })
       );
     });
@@ -88,13 +88,33 @@ class Game {
 
   update() {
     this.players.forEach((player) => {
-      player.socket.send(
+      player.getSocket().send(
         createMessage(MSG_UPDATE, {
           board: this.board,
           activePlayer: this.activePlayer,
         })
       );
     });
+  }
+
+  finish(isDraw) {
+    this.getActivePlayer()
+      .getSocket()
+      .send(
+        createMessage(MSG_FINISH, {
+          result: isDraw ? RESULT_DRAW : RESULT_WIN,
+          board: this.board,
+          joke: isDraw ? null : getJoke(),
+        })
+      );
+    this.getIdlePlayer()
+      .getSocket()
+      .send(
+        createMessage(MSG_FINISH, {
+          result: isDraw ? RESULT_DRAW : RESULT_LOSE,
+          board: this.board,
+        })
+      );
   }
 
   checkWin() {
@@ -159,10 +179,13 @@ class Game {
   }
 
   getActivePlayer() {
-    return this.players.find((player) => player.symbol === this.activePlayer);
+    return this.players.find(
+      (player) => player.getSymbol() === this.activePlayer
+    );
   }
+
   getIdlePlayer() {
-    return this.players.find((pl) => pl.symbol !== this.activePlayer);
+    return this.players.find((pl) => pl.getSymbol() !== this.activePlayer);
   }
 
   switchActivePlayer() {
@@ -171,22 +194,9 @@ class Game {
 
   getPlayerBySocket(socket, isSocketEqual) {
     return this.players.find((player) =>
-      isSocketEqual ? player.socket === socket : player.socket !== socket
-    );
-  }
-  finish(isDraw) {
-    this.getActivePlayer().socket.send(
-      createMessage(MSG_FINISH, {
-        result: isDraw ? RESULT_DRAW : RESULT_WIN,
-        board: this.board,
-        joke: isDraw ? null : getJoke(),
-      })
-    );
-    this.getIdlePlayer().socket.send(
-      createMessage(MSG_FINISH, {
-        result: isDraw ? RESULT_DRAW : RESULT_LOSE,
-        board: this.board,
-      })
+      isSocketEqual
+        ? player.getSocket() === socket
+        : player.getSocket() !== socket
     );
   }
 }
@@ -196,14 +206,22 @@ class Player {
     this.socket = socket;
     this.symbol = symbol;
   }
+
+  getSocket() {
+    return this.socket;
+  }
+
+  getSymbol() {
+    return this.symbol;
+  }
 }
 
-function createBoard() {
-  return [
-    ['', '', ''],
-    ['', '', ''],
-    ['', '', ''],
-  ];
+function createBoard(size = 3) {
+  const board = [];
+  for (let i = 0; i < size; i++) {
+    board.push(new Array(size).fill(''));
+  }
+  return board;
 }
 
 module.exports = {
