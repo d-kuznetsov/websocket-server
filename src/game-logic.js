@@ -31,15 +31,11 @@ function handleDisconnection(socket) {
   if (waitingSocket === socket) {
     waitingSocket = null;
   }
-
   const game = games.get(socket);
   if (game) {
-    const connectedPlayer = game.players.find((player) => {
-      return player.socket != socket;
-    });
+    const connectedPlayer = game.getPlayer(socket, false);
     games.delete(socket);
     games.delete(connectedPlayer.socket);
-    //connectedPlayer.opponentDisconnected();
     handleConnection(connectedPlayer.socket);
   }
 }
@@ -47,7 +43,7 @@ function handleDisconnection(socket) {
 function handleMove(socket, data) {
   const game = games.get(socket);
   if (game) {
-    const player = game.players.find((player) => player.socket == socket);
+    const player = game.getPlayer(socket, true);
 
     if (game.board[data.row][data.col] === '') {
       game.board[data.row][data.col] = player.symbol;
@@ -68,7 +64,7 @@ function handleMove(socket, data) {
         return;
       }
 
-      game.activePlayer = game.activePlayer == 'X' ? 'O' : 'X';
+      game.switchActivePlayer();
       game.update();
     }
   }
@@ -154,10 +150,20 @@ class Game {
   }
 
   getCurrentPlayer() {
-    return this.players.find((pl) => pl.symbol === this.activePlayer);
+    return this.players.find((player) => player.symbol === this.activePlayer);
   }
   getIdlePlayer() {
     return this.players.find((pl) => pl.symbol !== this.activePlayer);
+  }
+
+  switchActivePlayer() {
+    this.activePlayer = this.activePlayer == 'X' ? 'O' : 'X';
+  }
+
+  getPlayer(socket, isSocketEqual) {
+    return this.players.find((player) =>
+      isSocketEqual ? player.socket === socket : player.socket !== socket
+    );
   }
 }
 
