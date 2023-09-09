@@ -3,7 +3,7 @@ require('dotenv').config();
 const Fastify = require('fastify');
 const fstWebsocket = require('@fastify/websocket');
 const gameLogic = require('./game-logic');
-const { MSG_MOVE } = require('./config');
+const { MSG_MOVE } = require('./constants');
 const { fetchJoke } = require('./joke-api');
 
 const fastify = Fastify();

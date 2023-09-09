@@ -1,6 +1,6 @@
 const http = require('https');
 const { getRandomInt } = require('./utils');
-const { BOARD_SIZE } = require('./config');
+const { BOARD_SIZE } = require('./constants');
 
 const options = {
   method: 'GET',

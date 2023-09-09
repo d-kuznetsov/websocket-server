@@ -11,7 +11,7 @@ const {
   RESULT_DRAW,
 
   BOARD_SIZE,
-} = require('./config');
+} = require('./constants');
 
 let waitingSocket = null;
 const games = new Map();
