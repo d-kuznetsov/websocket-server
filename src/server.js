@@ -1,13 +1,15 @@
+require('dotenv').config();
+
 const Fastify = require('fastify');
 const fstWebsocket = require('@fastify/websocket');
 const gameLogic = require('./game-logic');
 const { MSG_MOVE } = require('./config');
 const { fetchJoke } = require('./joke-api');
 
-const app = Fastify();
-app.register(fstWebsocket);
+const fastify = Fastify();
+fastify.register(fstWebsocket);
 
-app.register(async (fastify) => {
+fastify.register(async (fastify) => {
   fastify.get('/ws', { websocket: true }, (conn, { id }) => {
     console.info(`${id} connected`);
     gameLogic.handleConnection(conn.socket);
@@ -35,8 +37,9 @@ async function run() {
     }
     await Promise.all(jokePromises);
 
-    const address = await app.listen({
-      port: 3000,
+    const address = await fastify.listen({
+      host: process.env.HOST,
+      port: process.env.PORT,
     });
     console.info(`Server listening on ${address}`);
   } catch (err) {

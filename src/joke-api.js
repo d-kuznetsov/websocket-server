@@ -4,13 +4,13 @@ const { BOARD_SIZE } = require('./config');
 
 const options = {
   method: 'GET',
-  hostname: 'matchilling-chuck-norris-jokes-v1.p.rapidapi.com',
+  hostname: process.env.API_HOST,
   port: null,
   path: '/jokes/random',
   headers: {
     accept: 'application/json',
-    'X-RapidAPI-Key': 'fa2b5aefb1msh4008d4dd0c37f5fp1220ffjsn1663f53195f9',
-    'X-RapidAPI-Host': 'matchilling-chuck-norris-jokes-v1.p.rapidapi.com',
+    'X-RapidAPI-Key': process.env.API_KEY,
+    'X-RapidAPI-Host': process.env.API_HOST,
   },
 };
 
@@ -18,14 +18,14 @@ const jokes = [];
 
 function fetchJoke() {
   return new Promise((resolve, reject) => {
-    const req = http.request(options, function (res) {
+    const req = http.request(options, (res) => {
       const chunks = [];
 
-      res.on('data', function (chunk) {
+      res.on('data', (chunk) => {
         chunks.push(chunk);
       });
 
-      res.on('end', function () {
+      res.on('end', () => {
         const buffer = Buffer.concat(chunks);
         const { value } = JSON.parse(buffer);
         jokes.push(value);
