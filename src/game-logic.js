@@ -111,6 +111,7 @@ class Game {
           joke: isDraw ? null : getJoke(),
         })
       );
+
     this.getIdlePlayer()
       .getSocket()
       .send(
@@ -122,57 +123,56 @@ class Game {
   }
 
   checkWin() {
-    const length = 3;
-    const winRow = this.board.some((row) => {
+    const winningRow = this.board.some((row) => {
       return row.every((col) => col === this.activePlayer);
     });
-    if (winRow) {
+    if (winningRow) {
       return true;
     }
 
-    let winCol;
-    for (let colIdx = 0; colIdx < length; colIdx++) {
-      winCol = true;
-      for (let rowIdx = 0; rowIdx < length; rowIdx++) {
+    let winningCol;
+    for (let colIdx = 0; colIdx < BOARD_SIZE; colIdx++) {
+      winningCol = true;
+      for (let rowIdx = 0; rowIdx < BOARD_SIZE; rowIdx++) {
         const symbol = this.board[rowIdx][colIdx];
         if (symbol !== this.activePlayer) {
-          winCol = false;
+          winningCol = false;
           break;
         }
       }
-      if (winCol) {
+      if (winningCol) {
         break;
       }
     }
 
-    if (winCol) {
+    if (winningCol) {
       return true;
     }
 
-    let winMainDiagonal = true;
-    for (let idx = 0; idx < length; idx++) {
+    let winningMajorDiag = true;
+    for (let idx = 0; idx < BOARD_SIZE; idx++) {
       if (this.board[idx][idx] !== this.activePlayer) {
-        winMainDiagonal = false;
+        winningMajorDiag = false;
         break;
       }
     }
-    if (winMainDiagonal) {
+    if (winningMajorDiag) {
       return true;
     }
 
-    let winSecondDiagonal = true;
+    let winningManorDiag = true;
 
     for (
-      let rowIdx = 0, colIdx = length - 1;
-      rowIdx < length;
+      let rowIdx = 0, colIdx = BOARD_SIZE - 1;
+      rowIdx < BOARD_SIZE;
       rowIdx++, colIdx--
     ) {
       if (this.board[rowIdx][colIdx] !== this.activePlayer) {
-        winSecondDiagonal = false;
+        winningManorDiag = false;
         break;
       }
     }
-    if (winSecondDiagonal) {
+    if (winningManorDiag) {
       return true;
     }
     return false;
