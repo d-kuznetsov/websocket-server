@@ -36,20 +36,20 @@ function handleDisconnection(socket) {
 
   const game = games.get(socket);
   if (game) {
-    const connectedPlayer = game.getPlayerBySocket(socket, false);
+    const opponent = game.getPlayerBySocket(socket, false);
     games.delete(socket);
-    games.delete(connectedPlayer.getSocket());
-    handleConnection(connectedPlayer.getSocket());
+    games.delete(opponent.getSocket());
+    handleConnection(opponent.getSocket());
   }
 }
 
-function handleMove(socket, data) {
+function handleMove(socket, { row, col }) {
   const game = games.get(socket);
   if (game) {
     const player = game.getPlayerBySocket(socket, true);
 
-    if (game.board[data.row][data.col] === '') {
-      game.board[data.row][data.col] = player.getSymbol();
+    if (game.board[row][col] === '') {
+      game.board[row][col] = player.getSymbol();
 
       if (game.checkWin()) {
         game.finish();
@@ -75,7 +75,7 @@ class Game {
   constructor(socket1, socket2) {
     this.players = [new Player(socket1, 'X'), new Player(socket2, 'O')];
     this.board = createBoard();
-    this.activePlayer = 'X';
+    this.activePlayerSymbol = 'X';
   }
 
   start() {
@@ -83,7 +83,7 @@ class Game {
       player.getSocket().send(
         createMessage(MSG_START, {
           board: this.board,
-          activePlayer: this.activePlayer,
+          activePlayerSymbol: this.activePlayerSymbol,
           symbol: player.getSymbol(),
         })
       );
@@ -95,7 +95,7 @@ class Game {
       player.getSocket().send(
         createMessage(MSG_UPDATE, {
           board: this.board,
-          activePlayer: this.activePlayer,
+          activePlayerSymbol: this.activePlayerSymbol,
         })
       );
     });
@@ -124,7 +124,7 @@ class Game {
 
   checkWin() {
     const winningRow = this.board.some((row) => {
-      return row.every((col) => col === this.activePlayer);
+      return row.every((symbol) => symbol === this.activePlayerSymbol);
     });
     if (winningRow) {
       return true;
@@ -135,7 +135,7 @@ class Game {
       winningCol = true;
       for (let rowIdx = 0; rowIdx < BOARD_SIZE; rowIdx++) {
         const symbol = this.board[rowIdx][colIdx];
-        if (symbol !== this.activePlayer) {
+        if (symbol !== this.activePlayerSymbol) {
           winningCol = false;
           break;
         }
@@ -151,7 +151,7 @@ class Game {
 
     let winningMajorDiag = true;
     for (let idx = 0; idx < BOARD_SIZE; idx++) {
-      if (this.board[idx][idx] !== this.activePlayer) {
+      if (this.board[idx][idx] !== this.activePlayerSymbol) {
         winningMajorDiag = false;
         break;
       }
@@ -167,7 +167,7 @@ class Game {
       rowIdx < BOARD_SIZE;
       rowIdx++, colIdx--
     ) {
-      if (this.board[rowIdx][colIdx] !== this.activePlayer) {
+      if (this.board[rowIdx][colIdx] !== this.activePlayerSymbol) {
         winningManorDiag = false;
         break;
       }
@@ -179,21 +179,23 @@ class Game {
   }
 
   checkDraw() {
-    return this.board.every((row) => row.every((col) => col !== ''));
+    return this.board.every((row) => row.every((symbol) => symbol !== ''));
   }
 
   getActivePlayer() {
     return this.players.find(
-      (player) => player.getSymbol() === this.activePlayer
+      (player) => player.getSymbol() === this.activePlayerSymbol
     );
   }
 
   getIdlePlayer() {
-    return this.players.find((pl) => pl.getSymbol() !== this.activePlayer);
+    return this.players.find(
+      (player) => player.getSymbol() !== this.activePlayerSymbol
+    );
   }
 
   switchActivePlayer() {
-    this.activePlayer = this.activePlayer == 'X' ? 'O' : 'X';
+    this.activePlayerSymbol = this.activePlayerSymbol == 'X' ? 'O' : 'X';
   }
 
   getPlayerBySocket(socket, isSocketEqual) {

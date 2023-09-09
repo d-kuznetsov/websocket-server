@@ -1,37 +1,33 @@
-'use strict';
-
-const fastify = require('fastify')();
-fastify.register(require('@fastify/websocket'));
+const Fastify = require('fastify');
+const fstWebsocket = require('@fastify/websocket');
 const gameLogic = require('./game-logic');
+const { MSG_MOVE } = require('./config');
 const { fetchJoke } = require('./joke-api');
 
-fastify.register(async function (fastify) {
-  fastify.get('/ws', { websocket: true }, (connection, req) => {
-    const { id } = req;
-    console.log('onConnect');
-    gameLogic.handleConnection(connection.socket);
+const app = Fastify();
+app.register(fstWebsocket);
 
-    connection.socket.on('message', (message) => {
-      const msg = JSON.parse(message);
-      if (msg.type === 'move') {
-        gameLogic.handleMove(connection.socket, msg.data);
+app.register(async (fastify) => {
+  fastify.get('/ws', { websocket: true }, (conn, { id }) => {
+    console.info(`${id} connected`);
+    gameLogic.handleConnection(conn.socket);
+
+    conn.socket.on('message', (message) => {
+      console.log(`${id} received message: ${message}`);
+      const { type, data } = JSON.parse(message);
+      if (type === MSG_MOVE) {
+        gameLogic.handleMove(conn.socket, data);
       }
-      console.log(`Received: ${message}. Id: ${id}`);
-      connection.socket.send(
-        JSON.stringify({
-          text: 'Hi from server',
-        })
-      );
     });
 
-    connection.socket.on('close', () => {
-      console.log(`Disconnected ${id}`);
-      gameLogic.handleDisconnection(connection.socket);
+    conn.socket.on('close', () => {
+      console.info(`${id} disconnected`);
+      gameLogic.handleDisconnection(conn.socket);
     });
   });
 });
 
-const run = async () => {
+async function run() {
   try {
     const jokePromises = [];
     for (let i = 0; i < 20; i++) {
@@ -39,7 +35,7 @@ const run = async () => {
     }
     await Promise.all(jokePromises);
 
-    const address = await fastify.listen({
+    const address = await app.listen({
       port: 3000,
     });
     console.info(`Server listening on ${address}`);
@@ -47,6 +43,6 @@ const run = async () => {
     console.error(`Error starting server: ${err}`);
     process.exit(1);
   }
-};
+}
 
 run();
