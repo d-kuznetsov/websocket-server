@@ -1,22 +1,16 @@
 const http = require('https');
 const { getRandomInt } = require('./utils');
-const { JOKE_COUNT } = require('./constants');
+const { FACT_COUNT } = require('./constants');
 
 const options = {
   method: 'GET',
-  hostname: process.env.API_HOST,
-  port: null,
-  path: '/jokes/random',
-  headers: {
-    accept: 'application/json',
-    'X-RapidAPI-Key': process.env.API_KEY,
-    'X-RapidAPI-Host': process.env.API_HOST,
-  },
+  hostname: 'catfact.ninja',
+  path: '/fact',
 };
 
-const jokes = [];
+const facts = [];
 
-function fetchJoke() {
+function fetchFact() {
   return new Promise((resolve, reject) => {
     const req = http.request(options, (res) => {
       const chunks = [];
@@ -27,9 +21,11 @@ function fetchJoke() {
 
       res.on('end', () => {
         const buffer = Buffer.concat(chunks);
-        const { value } = JSON.parse(buffer);
-        jokes.push(value);
-        resolve(value);
+
+        const { fact } = JSON.parse(buffer);
+
+        facts.push(fact);
+        resolve(fact);
       });
     });
 
@@ -41,11 +37,11 @@ function fetchJoke() {
   });
 }
 
-function getJoke() {
-  return jokes[getRandomInt(0, JOKE_COUNT - 1)];
+function getFact() {
+  return facts[getRandomInt(0, FACT_COUNT - 1)];
 }
 
 module.exports = {
-  fetchJoke,
-  getJoke,
+  fetchFact,
+  getFact,
 };

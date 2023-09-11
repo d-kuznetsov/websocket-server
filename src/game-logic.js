@@ -1,5 +1,5 @@
 const { createMessage } = require('./utils');
-const { getJoke } = require('./joke-api');
+const { getFact } = require('./fact-api');
 const {
   MSG_WAIT,
   MSG_START,
@@ -108,7 +108,7 @@ class Game {
         createMessage(MSG_FINISH, {
           result: isDraw ? RESULT_DRAW : RESULT_WIN,
           board: this.board,
-          joke: isDraw ? null : getJoke(),
+          fact: isDraw ? null : getFact(),
         })
       );
 

@@ -9,7 +9,7 @@ const RESULT_LOSE = 'lose';
 const RESULT_DRAW = 'draw';
 
 const BOARD_SIZE = 4;
-const JOKE_COUNT = 20;
+const FACT_COUNT = 30;
 
 module.exports = {
   MSG_WAIT,
@@ -21,5 +21,5 @@ module.exports = {
   RESULT_LOSE,
   RESULT_DRAW,
   BOARD_SIZE,
-  JOKE_COUNT,
+  FACT_COUNT,
 };
