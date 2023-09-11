@@ -8,7 +8,8 @@ const RESULT_WIN = 'win';
 const RESULT_LOSE = 'lose';
 const RESULT_DRAW = 'draw';
 
-const BOARD_SIZE = 3;
+const BOARD_SIZE = 4;
+const JOKE_COUNT = 20;
 
 module.exports = {
   MSG_WAIT,
@@ -20,4 +21,5 @@ module.exports = {
   RESULT_LOSE,
   RESULT_DRAW,
   BOARD_SIZE,
+  JOKE_COUNT,
 };

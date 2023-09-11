@@ -1,6 +1,6 @@
 const http = require('https');
 const { getRandomInt } = require('./utils');
-const { BOARD_SIZE } = require('./constants');
+const { JOKE_COUNT } = require('./constants');
 
 const options = {
   method: 'GET',
@@ -33,8 +33,8 @@ function fetchJoke() {
       });
     });
 
-    req.on('error', (error) => {
-      reject(error);
+    req.on('error', (err) => {
+      reject(err);
     });
 
     req.end();
@@ -42,7 +42,7 @@ function fetchJoke() {
 }
 
 function getJoke() {
-  return jokes[getRandomInt(0, BOARD_SIZE - 1)];
+  return jokes[getRandomInt(0, JOKE_COUNT - 1)];
 }
 
 module.exports = {

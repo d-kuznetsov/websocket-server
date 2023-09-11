@@ -3,7 +3,7 @@ require('dotenv').config();
 const Fastify = require('fastify');
 const fstWebsocket = require('@fastify/websocket');
 const gameLogic = require('./game-logic');
-const { MSG_MOVE } = require('./constants');
+const { MSG_MOVE, JOKE_COUNT } = require('./constants');
 const { fetchJoke } = require('./joke-api');
 
 const fastify = Fastify();
@@ -32,7 +32,7 @@ fastify.register(async (fastify) => {
 async function run() {
   try {
     const jokePromises = [];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < JOKE_COUNT; i++) {
       jokePromises.push(fetchJoke());
     }
     await Promise.all(jokePromises);
